@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GESTION StellAdomicile</title>
+    <style>
+        :root {
+            --primary: #84595a;
+            --primary-light: #b08d8e;
+            --bg-body: #f4f6f8;
+            --bg-card: #ffffff;
+            --text-main: #2d3748;
+            --text-light: #718096;
+            --danger: #e53e3e;
+            --success: #38a169;
+            --vacation: #63b3ed; /* Bleu vacances */
+            --vacation-bg: #ebf8ff;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            padding: 0 20px;
+            height: 70px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+            justify-self: start;
+        }
+
+        nav {
+            display: flex;
+            gap: 8px;
+            background: #f0f2f5;
+            padding: 5px;
+            border-radius: 50px;
+            justify-self: center;
+            overflow-x: auto; /* Sécurité mobile */
+            max-width: 100%;
+        }
+
+        nav button {
+            background: transparent;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        nav button.active {
+            background-color: var(--bg-card);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-spacer { justify-self: end; }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        .page { display: none; padding-bottom: 80px; }
+        .page.active { 
+            display: block; 
+            animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        h2 { font-size: 1.8rem; color: var(--text-main); font-weight: 700; }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(132, 89, 90, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background-color: #6d4a4b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(132, 89, 90, 0.4);
+        }
+        
+        .btn-vacation {
+            background-color: var(--vacation);
+            box-shadow: 0 4px 6px rgba(99, 179, 237, 0.3);
+        }
+        .btn-vacation:hover {
+            background-color: #4299e1;
+            box-shadow: 0 6px 12px rgba(99, 179, 237, 0.4);
+        }
+
+        .grid-clients {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .client-card, .vacation-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .client-card:hover, .vacation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-light);
+        }
+
+        .client-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary);
+        }
+        
+        .vacation-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--vacation);
+        }
+
+        .client-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .client-names h3 { font-size: 1.2rem; color: var(--text-main); }
+        .client-names .animal { color: var(--primary); font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .client-info { font-size: 0.9rem; color: var(--text-light); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+        
+        .client-actions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #edf2f7;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: #edf2f7;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+
+        .action-btn:hover { background: #e2e8f0; color: var(--text-main); }
+        .action-btn.delete:hover { background: #fed7d7; color: var(--danger); }
+
+        .calendar-container {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .calendar-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 20px;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 50px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .month-display {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: capitalize;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .nav-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--text-light);
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .nav-btn:hover { 
+            border-color: var(--primary); 
+            color: white; 
+            background-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius);
+            overflow: hidden;
+            width: 100%;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .day-label {
+            background: #f8fafc;
+            color: var(--text-light);
+            font-weight: 600;
+            text-align: center;
+            padding: 12px 2px;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .day-cell {
+            background: white;
+            min-height: 140px;
+            padding: 4px;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-cell:hover { background-color: #fff9f9; }
+        .day-cell.other-month { background-color: #fcfcfc; opacity: 0.5; pointer-events: none; }
+        .day-cell.today { background-color: #fff5f5; }
+
+        /* Style spécial vacances dans le calendrier */
+        .day-cell.vacation-day {
+            background: repeating-linear-gradient(
+                45deg,
+                var(--vacation-bg),
+                var(--vacation-bg) 10px,
+                #ffffff 10px,
+                #ffffff 20px
+            );
+        }
+        
+        .vacation-label {
+            font-size: 0.7rem;
+            background: var(--vacation);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 2px;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .date-num {
+            display: inline-flex;
+            width: 24px;
+            height: 24px;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            align-self: flex-start;
+            background: rgba(255,255,255,0.8); /* Pour lisibilité sur les vacances */
+        }
+
+        .day-cell.today .date-num {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(132, 89, 90, 0.4);
+        }
+
+        .event-chip {
+            background: white;
+            border-left: 3px solid var(--primary);
+            padding: 3px 5px;
+            margin-bottom: 2px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            color: var(--text-main);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.1s;
+            overflow: hidden;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .event-chip:hover { transform: scale(1.02); background: #fafafa; }
+        .event-chip span.time { font-weight: 700; color: var(--primary); margin-right: 4px; font-size: 0.65rem; }
+        .event-chip span.title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .event-chip span.time { display: inline; }
+        .event-chip { flex-direction: row; }
+        .event-chip .animal-name { order: 1; }
+        .event-chip .time { order: 2; }
+
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 10px;
+        }
+
+        .modal-overlay.open { display: flex; opacity: 1; }
+
+        .modal-box {
+            background: white;
+            padding: 0;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+            overflow: hidden;
+        }
+
+        .modal-overlay.open .modal-box { transform: scale(1); }
+
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #edf2f7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .modal-header h3 { font-size: 1.5rem; color: var(--primary); margin: 0; }
+        .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light); transition: transform 0.2s; }
+        .close-modal:hover { transform: rotate(90deg); color: var(--primary); }
+
+        .modal-content-scroll {
+            padding: 25px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-main); font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            background: #f8fafc;
+        }
+
+        .form-group input:focus, .form-group textarea:focus { 
+            border-color: var(--primary); 
+            background: white; 
+            outline: none; 
+            box-shadow: 0 0 0 3px rgba(132, 89, 90, 0.1); 
+        }
+
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #edf2f7;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        /* Styles pour la répétition */
+        .recurrence-box {
+            background: #f0fff4;
+            border: 1px solid #c6f6d5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .recurrence-box.active {
+            display: block;
+            animation: slideInUp 0.3s ease;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--primary);
+            cursor: pointer;
+        }
+        
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+
+        .week-days-selector {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            justify-content: space-between;
+        }
+
+        .day-check {
+            position: relative;
+        }
+
+        .day-check input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .day-check label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            height: 35px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0;
+        }
+
+        .day-check input:checked + label {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-cancel { background: #edf2f7; color: var(--text-main); border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-delete { background: #fed7d7; color: #c53030; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-save { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+
+        .history-list { max-height: 400px; overflow-y: auto; }
+        .history-section { margin-bottom: 20px; }
+        .history-title { font-size: 0.9rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid #edf2f7; padding-bottom: 5px; }
+        .history-item { display: flex; justify-content: space-between; padding: 10px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid transparent; }
+        .history-item.past { border-left-color: #cbd5e0; opacity: 0.8; }
+        .history-item.today { border-left-color: var(--success); background: #f0fff4; }
+        .history-item.future { border-left-color: var(--primary); }
+        .history-date { font-weight: 600; font-size: 0.9rem; }
+        .history-price { font-weight: 700; color: var(--primary); }
+        
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-light);
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            header { 
+                grid-template-columns: auto 1fr auto; 
+                gap: 10px;
+                padding: 10px; 
+            }
+            .brand { font-size: 1.1rem; }
+            nav button { padding: 6px 12px; font-size: 0.85rem; }
+            main { padding: 15px; }
+            .calendar-grid { font-size: 0.75rem; }
+            .day-cell { min-height: 70px; }
+            
+            /* Ajustements mobile pour modale */
+            .modal-box { 
+                width: 100%; 
+                height: auto;
+                max-height: 95vh;
+            }
+            .modal-content-scroll { padding: 15px; }
+            .modal-footer { flex-direction: column-reverse; gap: 10px; padding: 15px; }
+            .btn-save, .btn-cancel, .btn-delete { width: 100%; padding: 12px; }
+            
+            .week-days-selector {
+                gap: 2px;
+            }
+            .day-check label {
+                width: 30px;
+                height: 30px;
+                font-size: 0.7rem;
+            }
+
+            .event-chip {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 4px;
+                line-height: 1.2;
+                font-size: 0.7rem;
+                height: auto;
+            }
+
+            .event-chip span.title {
+                order: 1; 
+                font-weight: 600;
+                font-size: 0.75rem;
+                color: var(--text-main);
+                width: 100%;
+            }
+
+            .event-chip span.time {
+                order: 2; 
+                font-weight: 700; 
+                color: var(--primary); 
+                margin-right: 0;
+                font-size: 0.65rem;
+                padding-top: 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            StellAdomicile
+        </div>
+        <nav>
+            <button id="nav-clients" onclick="switchPage('clients')" class="active">Clients</button>
+            <button id="nav-vacances" onclick="switchPage('vacances')">Vacances</button>
+            <button id="nav-calendar" onclick="switchPage('calendar')">Calendrier</button>
+        </nav>
+        <div class="header-spacer"></div>
+    </header>
+
+    <main>
+        <!-- PAGE CLIENTS -->
+        <section id="clients-page" class="page active">
+            <div class="page-header">
+                <h2>Mes Clients</h2>
+                <button class="btn-primary" onclick="openClientModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Nouveau Client
+                </button>
+            </div>
+            <div id="client-list" class="grid-clients"></div>
+        </section>
+
+        <!-- PAGE VACANCES -->
+        <section id="vacances-page" class="page">
+            <div class="page-header">
+                <h2>Mes Vacances</h2>
+                <button class="btn-primary btn-vacation" onclick="openVacationModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    Ajouter Congés
+                </button>
+            </div>
+            <div id="vacation-list" class="grid-clients">
+                <!-- Les cartes vacances iront ici -->
+            </div>
+        </section>
+
+        <!-- PAGE CALENDRIER -->
+        <section id="calendar-page" class="page">
+            <div class="page-header">
+                <h2>Planning</h2>
+            </div>
+            <div class="calendar-container">
+                <div class="calendar-controls">
+                    <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+                    <span id="current-month" class="month-display"></span>
+                    <button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
+                </div>
+                <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Client -->
+    <div id="client-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="client-modal-title">Fiche Client</h3>
+                <button class="close-modal" onclick="closeModal('client-modal')">&times;</button>
+            </div>
+            <div class="modal-content-scroll">
+                <form id="client-form">
+                    <input type="hidden" id="client-id">
+                    <div class="form-group">
+                        <label>Nom de l'Animal *</label>
+                        <input type="text" id="client-animalName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Propriétaire (Prénom Nom) *</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="client-prenom" placeholder="Prénom" required>
+                            <input type="text" id="client-nom" placeholder="Nom" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Téléphone *</label>
+                        <input type="tel" id="client-telephone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="client-note" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-delete" id="btn-delete-client" onclick="deleteClient()" style="display:none;">Supprimer</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('client-modal')">Annuler</button>
+                <button type="button" onclick="submitClientForm()" class="btn-save">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Vacances -->
+    <div id="vacation-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="color: var(--vacation)">Poser des Congés</h3>
+                <button class="close-modal" onclick="closeModal('vacation-modal')">&times;</button>
+            </div>
+            <div class="modal-content-scroll">
+                <form id="vacation-form">
+                    <div class="form-group">
+                        <label>Titre (ex: Vacances Été) *</label>
+                        <input type="text" id="vacation-title" value="Congés" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date de début *</label>
+                        <input type="date" id="vacation-start" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date de fin (Inclus) *</label>
+                        <input type="date" id="vacation-end" required>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-light); font-style: italic;">
+                        Ces dates apparaîtront hachurées sur le calendrier.
+                    </p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('vacation-modal')">Annuler</button>
+                <button type="button" onclick="submitVacationForm()" class="btn-save" style="background-color: var(--vacation)">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Event -->
+    <div id="event-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="event-modal-title">Rendez-vous</h3>
+                <button class="close-modal" onclick="closeModal('event-modal')">&times;</button>
+            </div>
+            <div class="modal-content-scroll">
+                <form id="event-form">
+                    <input type="hidden" id="event-id">
+                    <div class="form-group">
+                        <label>Titre *</label>
+                        <input type="text" id="event-title" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Date *</label>
+                        <input type="date" id="event-date" required>
+                    </div>
+
+                    <!-- Section Répétition -->
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="event-repeat-toggle" onchange="toggleRepeatSection()">
+                        Répéter / Plusieurs dates ?
+                    </label>
+
+                    <div id="recurrence-section" class="recurrence-box">
+                        <div class="form-group">
+                            <label>Jusqu'au (Date de fin) :</label>
+                            <input type="date" id="event-end-date">
+                        </div>
+                        <div class="form-group">
+                            <label>Jours concernés :</label>
+                            <div class="week-days-selector">
+                                <div class="day-check"><input type="checkbox" value="1" checked id="day-1"><label for="day-1">Lun</label></div>
+                                <div class="day-check"><input type="checkbox" value="2" checked id="day-2"><label for="day-2">Mar</label></div>
+                                <div class="day-check"><input type="checkbox" value="3" checked id="day-3"><label for="day-3">Mer</label></div>
+                                <div class="day-check"><input type="checkbox" value="4" checked id="day-4"><label for="day-4">Jeu</label></div>
+                                <div class="day-check"><input type="checkbox" value="5" checked id="day-5"><label for="day-5">Ven</label></div>
+                                <div class="day-check"><input type="checkbox" value="6" checked id="day-6"><label for="day-6">Sam</label></div>
+                                <div class="day-check"><input type="checkbox" value="0" checked id="day-0"><label for="day-0">Dim</label></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Heure *</label>
+                        <input type="time" id="event-time" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Animal / Client *</label>
+                        <select id="event-client" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Prix (€)</label>
+                        <input type="number" id="event-price" step="0.01" value="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="event-note" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-delete" id="event-delete-btn" onclick="deleteEvent()" style="display:none;">Supprimer</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('event-modal')">Annuler</button>
+                <button type="button" onclick="submitEventForm()" class="btn-save">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal History -->
+    <div id="history-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="history-modal-title">Historique</h3>
+                <button class="close-modal" onclick="closeModal('history-modal')">&times;</button>
+            </div>
+            <div class="modal-content-scroll">
+                <div id="history-content" class="history-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CLIENTS_KEY = 'stella_clients_v2';
+        const EVENTS_KEY = 'stella_events_v2';
+        const VACATIONS_KEY = 'stella_vacations_v2';
+        
+        let clients = [];
+        let events = [];
+        let vacations = [];
+        let currentMonth = new Date();
+        
+        function getLocalISOString(date) {
+            const offset = date.getTimezoneOffset();
+            const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+            return localDate.toISOString().split('T')[0];
+        }
+
+        const todayIso = getLocalISOString(new Date());
+
+        function initApp() {
+            loadData();
+            renderCalendar();
+            renderClients();
+            renderVacations();
+        }
+
+        function loadData() {
+            try {
+                const c = localStorage.getItem(CLIENTS_KEY);
+                const e = localStorage.getItem(EVENTS_KEY);
+                const v = localStorage.getItem(VACATIONS_KEY);
+                
+                clients = c ? JSON.parse(c) : [];
+                events = e ? JSON.parse(e) : [];
+                vacations = v ? JSON.parse(v) : [];
+                
+                events.forEach(ev => {
+                    if (ev.date.includes('T')) ev.date = ev.date.split('T')[0]; 
+                });
+            } catch(err) {
+                console.error(err);
+                clients = []; events = []; vacations = [];
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients));
+            localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+            localStorage.setItem(VACATIONS_KEY, JSON.stringify(vacations));
+            renderCalendar();
+            renderClients();
+            renderVacations();
+        }
+
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId + '-page').classList.add('active');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-' + pageId).classList.add('active');
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('open');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+
+        /* --- VACATION LOGIC --- */
+        
+        function openVacationModal() {
+            document.getElementById('vacation-form').reset();
+            document.getElementById('vacation-start').value = todayIso;
+            openModal('vacation-modal');
+        }
+
+        function submitVacationForm() {
+            const form = document.getElementById('vacation-form');
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const title = document.getElementById('vacation-title').value.trim();
+            const start = document.getElementById('vacation-start').value;
+            const end = document.getElementById('vacation-end').value;
+
+            if (new Date(end) < new Date(start)) {
+                alert('La date de fin doit être après la date de début.');
+                return;
+            }
+
+            vacations.push({
+                id: generateId(),
+                title: title,
+                start: start,
+                end: end
+            });
+
+            saveData();
+            closeModal('vacation-modal');
+            switchPage('vacances');
+        }
+
+        function deleteVacation(id) {
+            if(confirm('Supprimer cette période de vacances ?')) {
+                vacations = vacations.filter(v => v.id !== id);
+                saveData();
+            }
+        }
+
+        function renderVacations() {
+            const list = document.getElementById('vacation-list');
+            list.innerHTML = '';
+
+            if (vacations.length === 0) {
+                list.innerHTML = '<div class="empty-message">Aucune période de vacances enregistrée.</div>';
+                return;
+            }
+
+            // Sort by start date, most recent first (or future first)
+            vacations.sort((a,b) => b.start.localeCompare(a.start));
+
+            vacations.forEach(v => {
+                const startD = new Date(v.start);
+                const endD = new Date(v.end);
+                
+                const div = document.createElement('div');
+                div.className = 'vacation-card';
+                div.innerHTML = `
+                    <div class="client-header">
+                        <div class="client-names">
+                            <h3>${v.title}</h3>
+                            <div class="animal" style="color: var(--vacation)">
+                                ${startD.toLocaleDateString('fr-FR')} au ${endD.toLocaleDateString('fr-FR')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="client-actions">
+                        <button class="action-btn delete" onclick="deleteVacation('${v.id}')">Supprimer</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function isDateInVacation(isoDate) {
+            return vacations.find(v => isoDate >= v.start && isoDate <= v.end);
+        }
+
+        /* --- CLIENT LOGIC --- */
+
+        function openClientModal(id = null) {
+            const form = document.getElementById('client-form');
+            form.reset();
+            document.getElementById('btn-delete-client').style.display = 'none';
+            document.getElementById('client-id').value = '';
+            document.getElementById('client-modal-title').textContent = 'Nouveau Client';
+
+            if (id) {
+                const c = clients.find(x => x.id === id);
+                if (c) {
+                    document.getElementById('client-id').value = c.id;
+                    document.getElementById('client-animalName').value = c.animalName;
+                    document.getElementById('client-prenom').value = c.prenom;
+                    document.getElementById('client-nom').value = c.nom;
+                    document.getElementById('client-telephone').value = c.telephone;
+                    document.getElementById('client-note').value = c.note || '';
+                    document.getElementById('btn-delete-client').style.display = 'block';
+                    document.getElementById('client-modal-title').textContent = 'Modifier Client';
+                }
+            }
+            openModal('client-modal');
+        }
+
+        function submitClientForm() {
+            const form = document.getElementById('client-form');
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const id = document.getElementById('client-id').value;
+            const data = {
+                id: id || generateId(),
+                animalName: document.getElementById('client-animalName').value.trim(),
+                prenom: document.getElementById('client-prenom').value.trim(),
+                nom: document.getElementById('client-nom').value.trim(),
+                telephone: document.getElementById('client-telephone').value.trim(),
+                note: document.getElementById('client-note').value.trim()
+            };
+
+            if (id) {
+                const idx = clients.findIndex(c => c.id === id);
+                if (idx > -1) clients[idx] = data;
+            } else {
+                clients.push(data);
+            }
+            saveData();
+            closeModal('client-modal');
+        }
+
+        function deleteClient() {
+            if (confirm('Supprimer ce client et tout son historique ?')) {
+                const id = document.getElementById('client-id').value;
+                clients = clients.filter(c => c.id !== id);
+                events = events.filter(e => e.clientId !== id);
+                saveData();
+                closeModal('client-modal');
+            }
+        }
+
+        function renderClients() {
+            const list = document.getElementById('client-list');
+            list.innerHTML = '';
+            
+            if (clients.length === 0) {
+                list.innerHTML = '<div class="empty-message">Aucun client enregistré pour le moment. Cliquez sur "Nouveau Client" pour commencer.</div>';
+                return;
+            }
+            
+            clients.sort((a,b) => a.animalName.localeCompare(b.animalName));
+
+            clients.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'client-card';
+                div.innerHTML = `
+                    <div class="client-header">
+                        <div class="client-names">
+                            <div class="animal">${c.animalName}</div>
+                            <h3>${c.prenom} ${c.nom}</h3>
+                        </div>
+                    </div>
+                    <div class="client-info">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        ${c.telephone}
+                    </div>
+                    <div class="client-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); openClientModal('${c.id}')">Modifier</button>
+                    </div>
+                `;
+                div.onclick = () => showHistory(c.id);
+                list.appendChild(div);
+            });
+        }
+
+        /* --- HISTORY LOGIC --- */
+
+        function showHistory(cid) {
+            const c = clients.find(x => x.id === cid);
+            const evs = events.filter(e => e.clientId === cid);
+            const content = document.getElementById('history-content');
+            document.getElementById('history-modal-title').textContent = `Historique: ${c.animalName}`;
+            
+            content.innerHTML = '';
+            
+            const cats = { today: [], future: [], past: [] };
+            
+            evs.forEach(e => {
+                if (e.date === todayIso) cats.today.push(e);
+                else if (e.date > todayIso) cats.future.push(e);
+                else cats.past.push(e);
+            });
+
+            cats.today.sort((a,b) => a.time.localeCompare(b.time));
+            cats.future.sort((a,b) => a.date.localeCompare(b.date));
+            cats.past.sort((a,b) => b.date.localeCompare(a.date));
+
+            const renderSection = (title, list, cls) => {
+                if(list.length === 0) return;
+                const sec = document.createElement('div');
+                sec.className = 'history-section';
+                sec.innerHTML = `<div class="history-title">${title}</div>`;
+                list.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = `history-item ${cls}`;
+                    row.innerHTML = `
+                        <div>
+                            <div class="history-date">${new Date(item.date).toLocaleDateString('fr-FR')} à ${item.time}</div>
+                            <div>${item.title}</div>
+                        </div>
+                        <div class="history-price">${item.price}€</div>
+                    `;
+                    sec.appendChild(row);
+                });
+                content.appendChild(sec);
+            };
+
+            renderSection("Aujourd'hui", cats.today, 'today');
+            renderSection('À Venir', cats.future, 'future');
+            renderSection('Passé', cats.past, 'past');
+
+            if(evs.length === 0) content.innerHTML = '<p style="text-align:center; color:#888;">Aucun historique.</p>';
+            
+            openModal('history-modal');
+        }
+
+        /* --- CALENDAR LOGIC --- */
+
+        function changeMonth(d) {
+            const grid = document.getElementById('calendar-grid');
+            grid.style.opacity = '0';
+            grid.style.transform = 'translateY(5px)';
+            
+            setTimeout(() => {
+                currentMonth.setMonth(currentMonth.getMonth() + d);
+                renderCalendar();
+                grid.style.opacity = '1';
+                grid.style.transform = 'translateY(0)';
+            }, 150);
+        }
+
+        function renderCalendar() {
+            const y = currentMonth.getFullYear();
+            const m = currentMonth.getMonth();
+            const firstDay = new Date(y, m, 1);
+            const lastDay = new Date(y, m + 1, 0);
+            
+            document.getElementById('current-month').textContent = firstDay.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            
+            const headers = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+            headers.forEach(h => {
+                const el = document.createElement('div');
+                el.className = 'day-label';
+                el.textContent = h;
+                grid.appendChild(el);
+            });
+
+            let startEmpty = firstDay.getDay() - 1;
+            if (startEmpty === -1) startEmpty = 6;
+
+            for(let i=0; i<startEmpty; i++) {
+                const d = document.createElement('div');
+                d.className = 'day-cell other-month';
+                grid.appendChild(d);
+            }
+
+            for(let i=1; i<=lastDay.getDate(); i++) {
+                const d = new Date(y, m, i);
+                const iso = getLocalISOString(d);
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                
+                // Vacation Logic
+                const vacation = isDateInVacation(iso);
+                if (vacation) {
+                    cell.classList.add('vacation-day');
+                }
+
+                if(iso === todayIso) cell.classList.add('today');
+                
+                cell.innerHTML = `<div class="date-num">${i}</div>`;
+                
+                if (vacation) {
+                    cell.innerHTML += `<div class="vacation-label">⛱️ ${vacation.title}</div>`;
+                }
+
+                const dayEvents = events.filter(e => e.date === iso).sort((a,b) => a.time.localeCompare(b.time));
+                
+                dayEvents.forEach(ev => {
+                    const c = clients.find(x => x.id === ev.clientId);
+                    const pill = document.createElement('div');
+                    pill.className = 'event-chip';
+                    pill.innerHTML = `<span class="title animal-name">${c ? c.animalName : '?'}</span><span class="time">${ev.time}</span>`;
+                    pill.onclick = (e) => { e.stopPropagation(); openEventModal(ev.id); };
+                    cell.appendChild(pill);
+                });
+
+                cell.onclick = () => {
+                    if (vacation) {
+                        if (confirm(`C'est les vacances (${vacation.title}) ! Voulez-vous quand même ajouter un RDV ?`)) {
+                            openEventModal(null, iso);
+                        }
+                    } else {
+                        openEventModal(null, iso);
+                    }
+                };
+                grid.appendChild(cell);
+            }
+        }
+
+        /* --- EVENT LOGIC --- */
+
+        function updateClientSelect() {
+            const sel = document.getElementById('event-client');
+            sel.innerHTML = '<option value="">-- Choisir --</option>';
+            clients.sort((a,b) => a.animalName.localeCompare(b.animalName));
+            clients.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.animalName} (${c.prenom} ${c.nom})`;
+                sel.appendChild(opt);
+            });
+        }
+
+        function toggleRepeatSection() {
+            const checked = document.getElementById('event-repeat-toggle').checked;
+            const section = document.getElementById('recurrence-section');
+            if (checked) section.classList.add('active');
+            else section.classList.remove('active');
+        }
+
+        function openEventModal(id = null, dateStr = null) {
+            const form = document.getElementById('event-form');
+            form.reset();
+            updateClientSelect();
+            
+            // Reset Repeat section
+            document.getElementById('event-repeat-toggle').checked = false;
+            document.getElementById('recurrence-section').classList.remove('active');
+            // Check all days by default
+            document.querySelectorAll('.week-days-selector input').forEach(cb => cb.checked = true);
+
+            document.getElementById('event-delete-btn').style.display = 'none';
+            document.getElementById('event-modal-title').textContent = 'Nouveau RDV';
+            document.getElementById('event-id').value = '';
+
+            // Si on édite un event existant, on cache la section répétition car c'est un item unique
+            if (id) {
+                const ev = events.find(x => x.id === id);
+                if (ev) {
+                    document.getElementById('event-id').value = ev.id;
+                    document.getElementById('event-title').value = ev.title;
+                    document.getElementById('event-date').value = ev.date;
+                    document.getElementById('event-time').value = ev.time;
+                    document.getElementById('event-client').value = ev.clientId;
+                    document.getElementById('event-price').value = ev.price;
+                    document.getElementById('event-note').value = ev.note;
+                    document.getElementById('event-delete-btn').style.display = 'block';
+                    document.getElementById('event-modal-title').textContent = 'Modifier RDV';
+                    // Disable repeat toggle on edit to keep it simple
+                    document.getElementById('event-repeat-toggle').disabled = true;
+                    document.getElementById('event-repeat-toggle').parentElement.style.opacity = '0.5';
+                }
+            } else {
+                // New Event
+                document.getElementById('event-repeat-toggle').disabled = false;
+                document.getElementById('event-repeat-toggle').parentElement.style.opacity = '1';
+
+                if (dateStr) {
+                    document.getElementById('event-date').value = dateStr;
+                }
+                const now = new Date();
+                document.getElementById('event-time').value = `${String(now.getHours()).padStart(2,'0')}:00`;
+            }
+            openModal('event-modal');
+        }
+
+        function submitEventForm() {
+            const form = document.getElementById('event-form');
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const id = document.getElementById('event-id').value;
+            const repeat = document.getElementById('event-repeat-toggle').checked && !id; // Seulement si nouveau
+            
+            const baseData = {
+                title: document.getElementById('event-title').value.trim(),
+                time: document.getElementById('event-time').value,
+                clientId: document.getElementById('event-client').value,
+                price: parseFloat(document.getElementById('event-price').value || 0).toFixed(2),
+                note: document.getElementById('event-note').value.trim()
+            };
+
+            const startDateStr = document.getElementById('event-date').value;
+
+            if (repeat) {
+                // Logic for multiple events
+                const endDateStr = document.getElementById('event-end-date').value;
+                if (!endDateStr) {
+                    alert('Veuillez sélectionner une date de fin pour la répétition.');
+                    return;
+                }
+                
+                let start = new Date(startDateStr);
+                let end = new Date(endDateStr);
+
+                if (end < start) {
+                    alert('La date de fin doit être après la date de début.');
+                    return;
+                }
+
+                // Get selected days
+                const allowedDays = [];
+                document.querySelectorAll('.week-days-selector input:checked').forEach(cb => {
+                    allowedDays.push(parseInt(cb.value));
+                });
+
+                let loopDate = new Date(start);
+                let count = 0;
+                while (loopDate <= end) {
+                    const dayOfWeek = loopDate.getDay(); // 0 = Dim, 1 = Lun...
+                    if (allowedDays.includes(dayOfWeek)) {
+                        const isoDate = getLocalISOString(loopDate);
+                        events.push({
+                            id: generateId(), // Unique ID for each
+                            date: isoDate,
+                            ...baseData
+                        });
+                        count++;
+                    }
+                    loopDate.setDate(loopDate.getDate() + 1);
+                }
+                alert(`${count} rendez-vous ont été créés !`);
+
+            } else {
+                // Single event (Create or Update)
+                const data = {
+                    id: id || generateId(),
+                    date: startDateStr,
+                    ...baseData
+                };
+
+                if (id) {
+                    const idx = events.findIndex(x => x.id === id);
+                    if (idx > -1) events[idx] = data;
+                } else {
+                    events.push(data);
+                }
+            }
+
+            saveData();
+            closeModal('event-modal');
+        }
+
+        function deleteEvent() {
+            if(confirm('Supprimer ce rendez-vous ?')) {
+                const id = document.getElementById('event-id').value;
+                events = events.filter(e => e.id !== id);
+                saveData();
+                closeModal('event-modal');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
