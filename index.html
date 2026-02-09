@@ -14,7 +14,7 @@
             --text-light: #718096;
             --danger: #e53e3e;
             --success: #38a169;
-            --vacation: #63b3ed; /* Bleu vacances */
+            --vacation: #63b3ed;
             --vacation-bg: #ebf8ff;
             --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
             --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
@@ -60,7 +60,7 @@
             padding: 5px;
             border-radius: 50px;
             justify-self: center;
-            overflow-x: auto; /* Sécurité mobile */
+            overflow-x: auto;
             max-width: 100%;
         }
 
@@ -319,7 +319,6 @@
         .day-cell.other-month { background-color: #fcfcfc; opacity: 0.5; pointer-events: none; }
         .day-cell.today { background-color: #fff5f5; }
 
-        /* Style spécial vacances dans le calendrier */
         .day-cell.vacation-day {
             background: repeating-linear-gradient(
                 45deg,
@@ -354,7 +353,7 @@
             color: var(--text-light);
             margin-bottom: 4px;
             align-self: flex-start;
-            background: rgba(255,255,255,0.8); /* Pour lisibilité sur les vacances */
+            background: rgba(255,255,255,0.8);
         }
 
         .day-cell.today .date-num {
@@ -435,7 +434,6 @@
 
         .modal-header h3 { font-size: 1.5rem; color: var(--primary); margin: 0; }
         .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light); transition: transform 0.2s; }
-        .close-modal:hover { transform: rotate(90deg); color: var(--primary); }
 
         .modal-content-scroll {
             padding: 25px;
@@ -472,7 +470,6 @@
             background: white;
         }
 
-        /* Styles pour la répétition */
         .recurrence-box {
             background: #f0fff4;
             border: 1px solid #c6f6d5;
@@ -578,8 +575,7 @@
             main { padding: 15px; }
             .calendar-grid { font-size: 0.75rem; }
             .day-cell { min-height: 70px; }
-            
-            /* Ajustements mobile pour modale */
+
             .modal-box { 
                 width: 100%; 
                 height: auto;
@@ -910,8 +906,6 @@
         function generateId() {
             return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
         }
-
-        /* --- VACATION LOGIC --- */
         
         function openVacationModal() {
             document.getElementById('vacation-form').reset();
@@ -992,8 +986,6 @@
         function isDateInVacation(isoDate) {
             return vacations.find(v => isoDate >= v.start && isoDate <= v.end);
         }
-
-        /* --- CLIENT LOGIC --- */
 
         function openClientModal(id = null) {
             const form = document.getElementById('client-form');
@@ -1089,8 +1081,6 @@
             });
         }
 
-        /* --- HISTORY LOGIC --- */
-
         function showHistory(cid) {
             const c = clients.find(x => x.id === cid);
             const evs = events.filter(e => e.clientId === cid);
@@ -1139,8 +1129,6 @@
             
             openModal('history-modal');
         }
-
-        /* --- CALENDAR LOGIC --- */
 
         function changeMonth(d) {
             const grid = document.getElementById('calendar-grid');
@@ -1227,8 +1215,6 @@
             }
         }
 
-        /* --- EVENT LOGIC --- */
-
         function updateClientSelect() {
             const sel = document.getElementById('event-client');
             sel.innerHTML = '<option value="">-- Choisir --</option>';
@@ -1252,18 +1238,15 @@
             const form = document.getElementById('event-form');
             form.reset();
             updateClientSelect();
-            
-            // Reset Repeat section
+
             document.getElementById('event-repeat-toggle').checked = false;
             document.getElementById('recurrence-section').classList.remove('active');
-            // Check all days by default
             document.querySelectorAll('.week-days-selector input').forEach(cb => cb.checked = true);
 
             document.getElementById('event-delete-btn').style.display = 'none';
             document.getElementById('event-modal-title').textContent = 'Nouveau RDV';
             document.getElementById('event-id').value = '';
 
-            // Si on édite un event existant, on cache la section répétition car c'est un item unique
             if (id) {
                 const ev = events.find(x => x.id === id);
                 if (ev) {
@@ -1276,12 +1259,10 @@
                     document.getElementById('event-note').value = ev.note;
                     document.getElementById('event-delete-btn').style.display = 'block';
                     document.getElementById('event-modal-title').textContent = 'Modifier RDV';
-                    // Disable repeat toggle on edit to keep it simple
                     document.getElementById('event-repeat-toggle').disabled = true;
                     document.getElementById('event-repeat-toggle').parentElement.style.opacity = '0.5';
                 }
             } else {
-                // New Event
                 document.getElementById('event-repeat-toggle').disabled = false;
                 document.getElementById('event-repeat-toggle').parentElement.style.opacity = '1';
 
@@ -1302,7 +1283,7 @@
             }
 
             const id = document.getElementById('event-id').value;
-            const repeat = document.getElementById('event-repeat-toggle').checked && !id; // Seulement si nouveau
+            const repeat = document.getElementById('event-repeat-toggle').checked && !id;
             
             const baseData = {
                 title: document.getElementById('event-title').value.trim(),
@@ -1315,7 +1296,6 @@
             const startDateStr = document.getElementById('event-date').value;
 
             if (repeat) {
-                // Logic for multiple events
                 const endDateStr = document.getElementById('event-end-date').value;
                 if (!endDateStr) {
                     alert('Veuillez sélectionner une date de fin pour la répétition.');
@@ -1330,7 +1310,6 @@
                     return;
                 }
 
-                // Get selected days
                 const allowedDays = [];
                 document.querySelectorAll('.week-days-selector input:checked').forEach(cb => {
                     allowedDays.push(parseInt(cb.value));
@@ -1339,11 +1318,11 @@
                 let loopDate = new Date(start);
                 let count = 0;
                 while (loopDate <= end) {
-                    const dayOfWeek = loopDate.getDay(); // 0 = Dim, 1 = Lun...
+                    const dayOfWeek = loopDate.getDay();
                     if (allowedDays.includes(dayOfWeek)) {
                         const isoDate = getLocalISOString(loopDate);
                         events.push({
-                            id: generateId(), // Unique ID for each
+                            id: generateId(),
                             date: isoDate,
                             ...baseData
                         });
@@ -1354,7 +1333,6 @@
                 alert(`${count} rendez-vous ont été créés !`);
 
             } else {
-                // Single event (Create or Update)
                 const data = {
                     id: id || generateId(),
                     date: startDateStr,
